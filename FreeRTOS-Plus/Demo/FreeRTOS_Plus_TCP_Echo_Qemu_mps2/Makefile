@@ -1,3 +1,4 @@
+CXX = arm-none-eabi-g++
 CC = arm-none-eabi-gcc
 SIZE = arm-none-eabi-size
 BIN := freertos_tcp_mps2_demo.axf
@@ -20,7 +21,7 @@ SOURCE_FILES += startup.c
 SOURCE_FILES += syscalls.c
 SOURCE_FILES += main.c
 SOURCE_FILES += main_networking.c
-SOURCE_FILES += TCPEchoClient_SingleTasks.c
+SOURCE_FILES += TCPServer_SingleTasks.c
 
 INCLUDE_DIRS += -ICMSIS
 
@@ -56,7 +57,7 @@ CPPFLAGS += $(DEFINES)
 
 CFLAGS += -mthumb -mcpu=cortex-m3
 ifeq ($(DEBUG), 1)
-    CFLAGS += -g3 -Og -ffunction-sections -fdata-sections
+    CFLAGS += -g3 -O0 -ffunction-sections -fdata-sections
 else
     CFLAGS += -Os -ffunction-sections -fdata-sections
 endif
@@ -72,6 +73,9 @@ LDFLAGS += -Xlinker --gc-sections
 LDFLAGS += -nostartfiles -specs=nano.specs -specs=nosys.specs -specs=rdimon.specs
 
 OBJ_FILES := $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.o)
+# OBJ_FILES += test.o
+
+# SOURCE_FILES += test.cpp
 
 .PHONY: clean
 

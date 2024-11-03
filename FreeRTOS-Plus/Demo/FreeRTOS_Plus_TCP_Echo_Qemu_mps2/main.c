@@ -32,6 +32,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <event_groups.h>
+#include <queue.h>
+#include "test.h"
 
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
                                     char * pcTaskName );
@@ -40,9 +43,90 @@ void main_tcp_echo_client_tasks( void );
 void vApplicationIdleHook( void );
 void vApplicationTickHook( void );
 
+/* Idle Task memory allocation */
+static StaticTask_t xIdleTaskTCBBuffer;
+static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
+
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
+                                   StackType_t **ppxIdleTaskStackBuffer,
+                                   uint32_t *pulIdleTaskStackSize)
+{
+    *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+    *ppxIdleTaskStackBuffer = &xIdleStack[0];
+    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+
+#define EVENT_BIT_1 (1 << 0)
+#define EVENT_BIT_2 (1 << 1)
+
+EventGroupHandle_t eventGroup;
+QueueHandle_t eventQueue;
+
+void eventLoopTask(void *pvParameters) {
+    EventBits_t uxBits;
+    uint32_t eventData;
+
+    while (1) {
+        // Wait for any of the event bits to be set
+        uxBits = xEventGroupWaitBits(
+            eventGroup,
+            EVENT_BIT_1 | EVENT_BIT_2,
+            pdTRUE,  // Clear bits after reading
+            pdFALSE, // Wait for any bit, not all
+            portMAX_DELAY);
+
+        if (uxBits & EVENT_BIT_1) {
+            // Handle EVENT_BIT_1
+            if (xQueueReceive(eventQueue, &eventData, 0) == pdTRUE) {
+                printf("Queued variable from other task: %d", eventData);
+            }
+        }
+
+        /*if (uxBits & EVENT_BIT_2) {*/
+        /*    // Handle EVENT_BIT_2*/
+        /*}*/
+        /**/
+        // Give other tasks a chance to run
+        taskYIELD();
+    }
+}
+
+void CouldBePipeWatcher(void *pvParameters) {
+    uint32_t dataToSend = 100;
+
+    while (1) {
+        // Trigger Event Every 5 seconds
+        vTaskDelay(pdMS_TO_TICKS(5000));
+        dataToSend++;
+        // Send event
+        xEventGroupSetBits(eventGroup, EVENT_BIT_1);
+        xQueueSend(eventQueue, &dataToSend, 0);
+    }
+}
+
 int main( void )
 {
-    main_tcp_echo_client_tasks();
+    printf("Inside the C main function\n");
+    /*test_print();*/
+    /*app_main();*/
+
+    // Create event group
+    eventGroup = xEventGroupCreate();
+
+    // Create queue for event data
+    eventQueue = xQueueCreate(10, sizeof(uint32_t));
+
+    // Create tasks
+    xTaskCreate(eventLoopTask, "EventLoop", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(CouldBePipeWatcher, "OtherTask", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    // Start the scheduler
+    vTaskStartScheduler();
+
+    // Should never reach here
+    for (;;);
+
+    /*main_tcp_echo_client_tasks();*/
     return 0;
 }
 

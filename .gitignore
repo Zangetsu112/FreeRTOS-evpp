@@ -1,5 +1,10 @@
 # Ignore MacOS file system related.
 **/*.DS_Store*
+*.pcap
+compile_commands.json
+*.sh
+.vscode
+.cache
 
 # Ignore build results
 [Dd]ebug/

@@ -140,6 +140,7 @@ static UBaseType_t ulNextRand;
 
 void main_tcp_echo_client_tasks( void )
 {
+    printf("Inside the glorious Echo function\n");
     BaseType_t xReturn;
     const uint32_t ulLongTime_ms = pdMS_TO_TICKS( 1000UL );
 
@@ -241,7 +242,7 @@ BaseType_t xTasksAlreadyCreated = pdFALSE;
 
             #if ( mainCREATE_TCP_ECHO_TASKS_SINGLE == 1 )
             {
-                vStartTCPEchoClientTasks_SingleTasks( mainECHO_CLIENT_TASK_STACK_SIZE,
+                vStartSimpleTCPServerTasks( mainECHO_CLIENT_TASK_STACK_SIZE,
                                                       mainECHO_CLIENT_TASK_PRIORITY );
             }
             #endif /* mainCREATE_TCP_ECHO_TASKS_SINGLE */

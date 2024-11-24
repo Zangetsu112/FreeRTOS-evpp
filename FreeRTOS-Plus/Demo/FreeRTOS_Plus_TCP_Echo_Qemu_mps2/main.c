@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <event_groups.h>
 #include <queue.h>
-#include "test.h"
+#include "EventLoop.h"
 
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
                                     char * pcTaskName );
@@ -55,6 +55,53 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
     *ppxIdleTaskStackBuffer = &xIdleStack[0];
     *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 }
+
+// What I want to be able to do:
+// #include <evpp/tcp_server.h>
+// #include <evpp/buffer.h>
+// #include <evpp/tcp_conn.h>
+// 
+// #ifdef _WIN32
+// #include "../../winmain-inl.h"
+// #endif
+// 
+// void OnMessage(const evpp::TCPConnPtr& conn,
+//                evpp::Buffer* msg) {
+//     std::string s = msg->NextAllString();
+//     LOG_INFO << "Received a message [" << s << "]";
+//     conn->Send(s);
+// 
+//     if (s == "quit" || s == "exit") {
+//         conn->Close();
+//     }
+// }
+// 
+// 
+// void OnConnection(const evpp::TCPConnPtr& conn) {
+//     if (conn->IsConnected()) {
+//         LOG_INFO << "Accept a new connection from " << conn->remote_addr();
+//     } else {
+//         LOG_INFO << "Disconnected from " << conn->remote_addr();
+//     }
+// }
+// 
+// 
+// int main(int argc, char* argv[]) {
+//     std::string port = "9099";
+//     if (argc == 2) {
+//         port = argv[1];
+//     }
+//     std::string addr = std::string("0.0.0.0:") + port;
+//     evpp::EventLoop loop;
+//     evpp::TCPServer server(&loop, addr, "TCPEcho", 2);
+//     server.SetMessageCallback(&OnMessage);
+//     server.SetConnectionCallback(&OnConnection);
+//     server.Init();
+//     server.Start();
+//     loop.Run();
+//     return 0;
+// }
+// 
 
 #define EVENT_BIT_1 (1 << 0)
 #define EVENT_BIT_2 (1 << 1)
@@ -110,16 +157,18 @@ int main( void )
     /*test_print();*/
     /*app_main();*/
 
-    // Create event group
-    eventGroup = xEventGroupCreate();
+    // // Create event group
+    // eventGroup = xEventGroupCreate();
 
-    // Create queue for event data
-    eventQueue = xQueueCreate(10, sizeof(uint32_t));
+    // // Create queue for event data
+    // eventQueue = xQueueCreate(10, sizeof(uint32_t));
 
-    // Create tasks
-    xTaskCreate(eventLoopTask, "EventLoop", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    xTaskCreate(CouldBePipeWatcher, "OtherTask", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    // // Create tasks
+    // xTaskCreate(eventLoopTask, "EventLoop", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    // xTaskCreate(CouldBePipeWatcher, "OtherTask", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
+    main_tcp_echo_client_tasks();
+    app_main();
     // Start the scheduler
     vTaskStartScheduler();
 

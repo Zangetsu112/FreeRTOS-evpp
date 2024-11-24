@@ -314,4 +314,5 @@ extern void vLoggingPrintf( const char * pcFormatString,
 
 #define portINLINE                          __inline
 
+#define ipconfigSUPPORT_SIGNALS             1
 #endif /* FREERTOS_IP_CONFIG_H */

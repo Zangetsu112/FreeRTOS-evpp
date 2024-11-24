@@ -17,11 +17,13 @@ INCLUDE_DIRS += -I.
 FREERTOS_TCP = ${FREERTOS_PLUS_DIR}/Source/FreeRTOS-Plus-TCP
 
 # Demo Source Files
+# SOURCE_FILES += EventLoop.cpp
 SOURCE_FILES += startup.c
 SOURCE_FILES += syscalls.c
 SOURCE_FILES += main.c
 SOURCE_FILES += main_networking.c
 SOURCE_FILES += TCPServer_SingleTasks.c
+
 
 INCLUDE_DIRS += -ICMSIS
 
@@ -70,18 +72,22 @@ CFLAGS += $(INCLUDE_DIRS)
 LDFLAGS = -T mps2_m3.ld
 LDFLAGS += -Xlinker -Map=${BUILD_DIR}/output.map
 LDFLAGS += -Xlinker --gc-sections
-LDFLAGS += -nostartfiles -specs=nano.specs -specs=nosys.specs -specs=rdimon.specs
+LDFLAGS += -nostartfiles -specs=nano.specs -specs=nosys.specs -specs=rdimon.specs -lsupc++
 
 OBJ_FILES := $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.o)
-# OBJ_FILES += test.o
-
-# SOURCE_FILES += test.cpp
+OBJ_FILES += EventLoop.o
 
 .PHONY: clean
 
 $(BUILD_DIR)/$(BIN) : $(OBJ_FILES)
-	$(CC) $(CFLAGS) $(LDFLAGS) $+ -o $(@)
+	$(CXX) $(CFLAGS) $(LDFLAGS) $+ -o $(@)
 	$(SIZE) $(@)
+
+%.d: %.cpp
+	@set -e; rm -f $@; \
+	$(CXX) -M $(CPPFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
 %.d: %.c
 	@set -e; rm -f $@; \
@@ -94,7 +100,12 @@ INCLUDES := $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.d)
 
 ${BUILD_DIR}/%.o : %.c Makefile
 	-mkdir -p $(@D)
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+${BUILD_DIR}/%.o : %.c Makefile
+	-mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
 	-rm -rf build
+

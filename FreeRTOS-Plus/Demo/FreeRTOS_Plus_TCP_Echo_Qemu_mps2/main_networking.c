@@ -31,6 +31,9 @@
  */
 
 /* Standard includes. */
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -44,6 +47,12 @@
 #include "FreeRTOS_Sockets.h"
 #include "TCPEchoClient_SingleTasks.h"
 #include "CMSIS/CMSDK_CM3.h"
+#ifdef __cplusplus
+}
+#endif
+
+/*#include "evpp/example_tcp_echo.h"*/
+
 
 /* Echo client task parameters  */
 #define mainECHO_CLIENT_TASK_STACK_SIZE     ( configMINIMAL_STACK_SIZE * 2 )                /* Not used in the linux port. */
@@ -67,6 +76,11 @@
 #define mainCREATE_TCP_ECHO_TASKS_SINGLE    1
 
 /*-----------------------------------------------------------*/
+// void start_tcp_task(void);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Just seeds the simple pseudo random number generator.
@@ -140,7 +154,7 @@ static UBaseType_t ulNextRand;
 
 void main_tcp_echo_client_tasks( void )
 {
-    printf("Inside the glorious Echo function\n");
+    // printf("Inside the Echo function\n");
     BaseType_t xReturn;
     const uint32_t ulLongTime_ms = pdMS_TO_TICKS( 1000UL );
 
@@ -189,6 +203,7 @@ void main_tcp_echo_client_tasks( void )
     #endif /* defined( ipconfigIPv4_BACKWARD_COMPATIBLE ) && ( ipconfigIPv4_BACKWARD_COMPATIBLE == 0 ) */
 
     configASSERT( xReturn == pdTRUE );
+    // return; // Give chance to Evpp application to run
 
     /* Start the RTOS scheduler. */
     FreeRTOS_debug_printf( ( "vTaskStartScheduler\n" ) );
@@ -240,12 +255,14 @@ BaseType_t xTasksAlreadyCreated = pdFALSE;
              * macros at the top of this file for a description of the individual
              * demo tasks. */
 
-            #if ( mainCREATE_TCP_ECHO_TASKS_SINGLE == 1 )
-            {
-                vStartSimpleTCPServerTasks( mainECHO_CLIENT_TASK_STACK_SIZE,
-                                                      mainECHO_CLIENT_TASK_PRIORITY );
-            }
-            #endif /* mainCREATE_TCP_ECHO_TASKS_SINGLE */
+            // #if ( mainCREATE_TCP_ECHO_TASKS_SINGLE == 1 )
+            // {
+            //     vStartSimpleTCPServerTasks( mainECHO_CLIENT_TASK_STACK_SIZE,
+            //                                           mainECHO_CLIENT_TASK_PRIORITY );
+            // }
+            // #endif /* mainCREATE_TCP_ECHO_TASKS_SINGLE */
+
+            start_tcp_task();
 
             xTasksAlreadyCreated = pdTRUE;
         }
@@ -394,3 +411,7 @@ BaseType_t xApplicationGetRandomNumber( uint32_t * pulNumber )
     *( pulNumber ) = uxRand();
     return pdTRUE;
 }
+
+#ifdef __cplusplus
+}
+#endif

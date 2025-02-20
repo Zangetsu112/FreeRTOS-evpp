@@ -41,7 +41,11 @@
 *----------------------------------------------------------*/
 
 #define configASSERT_DEFINED    1
-extern void vAssertCalled( void );
+#ifdef __cplusplus
+    extern "C" void vAssertCalled( void );
+#else
+    extern void vAssertCalled( void );
+#endif
 #define configASSERT( x )    if( ( x ) == 0 ) vAssertCalled( )
 
 #define configUSE_PREEMPTION                1
@@ -54,7 +58,7 @@ extern void vAssertCalled( void );
 #define configMINIMAL_STACK_SIZE            ( ( unsigned short ) 2000 )
 #define configTOTAL_HEAP_SIZE               ( ( size_t ) ( 279000 ) )
 #define configMAX_TASK_NAME_LEN             ( 10 )
-// #define configUSE_TRACE_FACILITY            0
+#define configUSE_TRACE_FACILITY            1
 #define configUSE_16_BIT_TICKS              0
 #define configIDLE_SHOULD_YIELD             0
 #define configMAX_PRIORITIES                ( 10 )

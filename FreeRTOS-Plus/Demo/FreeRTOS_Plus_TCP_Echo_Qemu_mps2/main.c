@@ -24,6 +24,10 @@
  *
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <FreeRTOS.h>
 #include <task.h>
 
@@ -34,14 +38,17 @@
 #include <stdio.h>
 #include <event_groups.h>
 #include <queue.h>
-#include "EventLoop.h"
+// #include "EventLoop.h"
+// #include "tcp_server.h"
+// #include "evpp_buffer.h"
 
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
-                                    char * pcTaskName );
+                          char * pcTaskName );
 void vApplicationMallocFailedHook( void );
 void main_tcp_echo_client_tasks( void );
 void vApplicationIdleHook( void );
 void vApplicationTickHook( void );
+void vAssertCalled( void );
 
 /* Idle Task memory allocation */
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -103,53 +110,6 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
 // }
 // 
 
-#define EVENT_BIT_1 (1 << 0)
-#define EVENT_BIT_2 (1 << 1)
-
-EventGroupHandle_t eventGroup;
-QueueHandle_t eventQueue;
-
-void eventLoopTask(void *pvParameters) {
-    EventBits_t uxBits;
-    uint32_t eventData;
-
-    while (1) {
-        // Wait for any of the event bits to be set
-        uxBits = xEventGroupWaitBits(
-            eventGroup,
-            EVENT_BIT_1 | EVENT_BIT_2,
-            pdTRUE,  // Clear bits after reading
-            pdFALSE, // Wait for any bit, not all
-            portMAX_DELAY);
-
-        if (uxBits & EVENT_BIT_1) {
-            // Handle EVENT_BIT_1
-            if (xQueueReceive(eventQueue, &eventData, 0) == pdTRUE) {
-                printf("Queued variable from other task: %d", eventData);
-            }
-        }
-
-        /*if (uxBits & EVENT_BIT_2) {*/
-        /*    // Handle EVENT_BIT_2*/
-        /*}*/
-        /**/
-        // Give other tasks a chance to run
-        taskYIELD();
-    }
-}
-
-void CouldBePipeWatcher(void *pvParameters) {
-    uint32_t dataToSend = 100;
-
-    while (1) {
-        // Trigger Event Every 5 seconds
-        vTaskDelay(pdMS_TO_TICKS(5000));
-        dataToSend++;
-        // Send event
-        xEventGroupSetBits(eventGroup, EVENT_BIT_1);
-        xQueueSend(eventQueue, &dataToSend, 0);
-    }
-}
 
 int main( void )
 {
@@ -168,7 +128,9 @@ int main( void )
     // xTaskCreate(CouldBePipeWatcher, "OtherTask", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     main_tcp_echo_client_tasks();
-    app_main();
+    // app_main();
+    // TestTask task;
+    // task.start();
     // Start the scheduler
     vTaskStartScheduler();
 
@@ -230,6 +192,7 @@ void vApplicationTickHook( void )
 }
 /*-----------------------------------------------------------*/
 
+// Defined in Inner_pre
 void vAssertCalled( void )
 {
     volatile unsigned long looping = 0;
@@ -255,3 +218,8 @@ void vLoggingPrintf( const char * pcFormat,
     vprintf( pcFormat, arg );
     va_end( arg );
 }
+
+#ifdef __cplusplus
+}
+#endif
+

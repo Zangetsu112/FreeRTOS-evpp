@@ -122,7 +122,7 @@ public:
         close_fn_ = cb;
     }
     void OnAttachedToLoop();
-    std::string StatusToString() const;
+    /*std::string StatusToString() const;*/
 private:
     void HandleRead();
     void HandleWrite();

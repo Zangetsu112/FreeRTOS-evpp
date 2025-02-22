@@ -71,7 +71,7 @@ void Listener::Accept() {
     // loop_->RunInLoop(std::bind(&FdChannel::AttachToLoop, chan_.get()));
 
     chan_->SetReadCallback([this]() { this -> HandleAccept(); });
-    loop_->RunInLoop([this]() { chan_ -> AttachToLoop(); }); 
+    loop_->RunInLoop([this]() { this -> chan_ -> AttachToLoop(); }); 
     // LOG_INFO << "TCPServer is running at " << addr_;
 }
 

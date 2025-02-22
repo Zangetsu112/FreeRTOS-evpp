@@ -27,14 +27,18 @@ bool EventLoopThread::Start(bool wait_thread_started, Functor pre, Functor post)
     BaseType_t result_ = xTaskCreate(
         taskFunction,        // Static function to run
         name_.c_str(),
-        configMINIMAL_STACK_SIZE * 2, // Stack size (adjust as needed)
+        configMINIMAL_STACK_SIZE, // Stack size (adjust as needed)
         this,                // Pass 'this' pointer as parameter
-        8,    // Task priority
+        2,    // Task priority
         &thread_ // Task handle
     );
     // We do this alloc so the EventLoop can tell if it is running in a task (thread)
     // Change this - this is a horrible way of doing it 
-    event_loop_->thread_id = uxTaskGetTaskNumber(thread_);
+    /*event_loop_->thread_id = uxTaskGetTaskNumber(thread_);*/
+    TaskStatus_t xTaskDetails;
+    vTaskGetInfo(thread_, &xTaskDetails, 1, eRunning);
+    event_loop_->thread_id = xTaskDetails.xTaskNumber;
+
 
     if (result_ != pdPASS) {
         printf("Couldn't start task\n");

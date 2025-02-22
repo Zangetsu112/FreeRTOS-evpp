@@ -6,7 +6,7 @@
 
 extern "C" {
     void start_tcp_task() {
-        xTaskCreate(TestTask::taskWrapper, "TestEVPPTask", configMINIMAL_STACK_SIZE * 2, NULL, 8, NULL);
+        xTaskCreate(TestTask::taskWrapper, "TestEVPPTask", configMINIMAL_STACK_SIZE , NULL, 2, NULL);
     }
 }
 

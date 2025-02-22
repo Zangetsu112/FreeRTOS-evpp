@@ -318,11 +318,11 @@ void TCPConn::SetHighWaterMarkCallback(const HighWaterMarkCallback& cb, size_t m
 //     sock::SetTCPNoDelay(fd_, on);
 // }
 
-std::string TCPConn::StatusToString() const {
-    H_CASE_STRING_BIGIN(status_);
-    H_CASE_STRING(kDisconnected);
-    H_CASE_STRING(kConnecting);
-    H_CASE_STRING(kConnected);
-    H_CASE_STRING(kDisconnecting);
-    H_CASE_STRING_END();
-}
+/*std::string TCPConn::StatusToString() const {*/
+/*    H_CASE_STRING_BIGIN(status_);*/
+/*    H_CASE_STRING(kDisconnected);*/
+/*    H_CASE_STRING(kConnecting);*/
+/*    H_CASE_STRING(kConnected);*/
+/*    H_CASE_STRING(kDisconnecting);*/
+/*    H_CASE_STRING_END();*/
+/*}*/

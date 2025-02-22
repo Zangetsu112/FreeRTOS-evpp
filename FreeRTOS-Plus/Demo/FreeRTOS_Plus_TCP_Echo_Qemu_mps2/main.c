@@ -114,6 +114,8 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
 int main( void )
 {
     printf("Inside the C main function\n");
+    // printf("Free Heap: %u bytes\n", xPortGetFreeHeapSize());
+    // printf("Min Ever Free Heap: %u bytes\n", xPortGetMinimumEverFreeHeapSize());
     /*test_print();*/
     /*app_main();*/
 

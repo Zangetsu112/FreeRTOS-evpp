@@ -290,6 +290,7 @@ void TCPConn::HandleClose() {
         close_fn_(conn);
     }
     // DLOG_TRACE << "addr=" << AddrToString() << " fd=" << fd_ << " status_=" << StatusToString() << " use_count=" << conn.use_count();
+    // FreeRTOS_closesocket(fd_);
     status_ = kDisconnected;
 }
 

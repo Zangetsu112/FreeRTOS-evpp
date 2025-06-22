@@ -22,12 +22,14 @@ EventLoopThreadPool::~EventLoopThreadPool() {
 
 bool EventLoopThreadPool::Start(bool wait_thread_started) {
     // status_.store(kStarting);
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStarting);
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStarting);
+    status_ = kStarting;
     // DLOG_TRACE << "thread_num=" << thread_num() << " base loop=" << base_loop_ << " wait_thread_started=" << wait_thread_started;
 
     if (thread_num_ == 0) {
         // status_.store(kRunning);
-        Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kRunning);
+        // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kRunning);
+        status_ = kRunning;
         return true;
     } 
 
@@ -65,11 +67,11 @@ bool EventLoopThreadPool::Start(bool wait_thread_started) {
 
     if (wait_thread_started) {
         while (!IsRunning()) {
-            /*usleep(pdMS_TO_TICKS(1000));*/
+            // usleep(pdMS_TO_TICKS(1000));
             taskYIELD();
         }
-        // assert(status_ == kRunning);
-        configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == ServerStatus::Status::kRunning);
+        configASSERT(status_ == kRunning);
+        // configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == ServerStatus::Status::kRunning);
     }
 
     return true;
@@ -88,11 +90,13 @@ void EventLoopThreadPool::Stop(DoneCallback fn) {
 void EventLoopThreadPool::Stop(bool wait_thread_exit, DoneCallback fn) {
     // DLOG_TRACE;
     // status_.store(kStopping);
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
+    status_ = kStopping;
     
     if (thread_num_ == 0) {
         // status_.store(kStopping);
-        Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
+        // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
+        status_ = kStopping;
         
         if (fn) {
             // DLOG_TRACE << "calling stopped callback";
@@ -123,14 +127,15 @@ void EventLoopThreadPool::Stop(bool wait_thread_exit, DoneCallback fn) {
     // DLOG_TRACE << "before promise wait";
     if (thread_num_ > 0 && wait_thread_exit) {
         while (!is_stopped_fn()) {
-            /*usleep(pdMS_TO_TICKS(1000));*/
+            // usleep(pdMS_TO_TICKS(1000));
             taskYIELD();
         }
     }
     // DLOG_TRACE << "after promise wait";
 
     // status_.store(kStopped);
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+    status_ = kStopped;
 }
 
 // void EventLoopThreadPool::Join() {
@@ -183,7 +188,8 @@ void EventLoopThreadPool::OnThreadStarted(uint32_t count) {
     if (count == thread_num_) {
         // DLOG_TRACE << "thread pool totally started.";
         // status_.store(kRunning);
-        Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kRunning);
+        // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kRunning);
+        status_ = kRunning;
     }
 }
 
@@ -191,7 +197,8 @@ void EventLoopThreadPool::OnThreadExited(uint32_t count) {
     // DLOG_TRACE << "tid=" << std::this_thread::get_id() << " count=" << count << " exited.";
     if (count == thread_num_) {
         // status_.store(kStopped);
-        Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+        // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+        status_ = kStopped;
         // DLOG_TRACE << "this is the last thread stopped. Thread pool totally exited.";
         if (stopped_cb_) {
             stopped_cb_();

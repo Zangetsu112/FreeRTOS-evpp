@@ -194,6 +194,14 @@ void vApplicationTickHook( void )
 }
 /*-----------------------------------------------------------*/
 
+void iptraceNETWORK_INTERFACE_RECEIVE(uint32_t ulIPAddress) {
+    FreeRTOS_debug_printf((xTaskGetTickCount()));  // Record packet arrival time
+}
+
+void iptraceNETWORK_INTERFACE_TRANSMIT(uint32_t ulIPAddress) {
+    FreeRTOS_debug_printf((xTaskGetTickCount()));  // Record reply send time
+}
+
 // Defined in Inner_pre
 void vAssertCalled( void )
 {

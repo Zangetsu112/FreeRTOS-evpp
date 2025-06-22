@@ -29,6 +29,8 @@ void FdChannel::AttachToLoop() {
     if (!IsNoneEvent() && !attached_) {
         // loop_->evbase_->addSocketEvent(fd_, std::bind(&FdChannel::HandleEvent, this), events_);
         loop_->evbase_->addSocketEvent(fd_, [this]() { this->HandleEvent(); }, events_);
+        loop_->notified_ = 1;
+        loop_->watcher_->Notify();
         attached_ = true;
     }
 }

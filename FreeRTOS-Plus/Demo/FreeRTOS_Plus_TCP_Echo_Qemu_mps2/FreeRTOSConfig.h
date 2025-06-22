@@ -54,10 +54,10 @@
 #define configUSE_IDLE_HOOK                 0
 #define configUSE_TICK_HOOK                 0
 #define configCPU_CLOCK_HZ                  ( ( unsigned long ) 20000000 )
-#define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 )
+#define configTICK_RATE_HZ                  ( ( TickType_t ) 100000 )
 #define configMINIMAL_STACK_SIZE            ( ( unsigned short ) 2000 )
-// #define configTOTAL_HEAP_SIZE               ( ( size_t ) ( 279000 ) )
-#define configTOTAL_HEAP_SIZE               ( ( size_t ) ( 10 * 1024 * 1024 ) )
+#define configTOTAL_HEAP_SIZE               ( ( size_t ) ( 279000 ) )
+// #define configTOTAL_HEAP_SIZE               ( ( size_t ) ( 10 * 1024 * 1024 ) )
 #define configMAX_TASK_NAME_LEN             ( 10 )
 #define configUSE_TRACE_FACILITY            1
 #define configUSE_16_BIT_TICKS              0
@@ -100,7 +100,7 @@
 
 
 /* networking definitions */
-#define configMAC_ISR_SIMULATOR_PRIORITY    ( configMAX_PRIORITIES - 2 )
+#define configMAC_ISR_SIMULATOR_PRIORITY    ( configMAX_PRIORITIES - 1 )
 #define ipconfigUSE_NETWORK_EVENT_HOOK      1
 #define configNETWORK_INTERFACE_TO_USE      1L
 
@@ -142,27 +142,27 @@
 /* Default IP address configuration.  Used if ipconfigUSE_DHCP is set to 0, or
  * ipconfigUSE_DHCP is set to 1 but a DHCP server cannot be contacted. */
 
-#define configIP_ADDR0    10
-#define configIP_ADDR1    0
-#define configIP_ADDR2    2
-#define configIP_ADDR3    15
+#define configIP_ADDR0    192
+#define configIP_ADDR1    168
+#define configIP_ADDR2    65
+#define configIP_ADDR3    81
 
 /* Default gateway IP address configuration.  Used if ipconfigUSE_DHCP is set to
  * 0, or ipconfigUSE_DHCP is set to 1 but a DHCP server cannot be contacted. */
 
-#define configGATEWAY_ADDR0    10
-#define configGATEWAY_ADDR1    0
-#define configGATEWAY_ADDR2    2
-#define configGATEWAY_ADDR3    2
+#define configGATEWAY_ADDR0    192
+#define configGATEWAY_ADDR1    168
+#define configGATEWAY_ADDR2    65
+#define configGATEWAY_ADDR3    1
 
 /* Default DNS server configuration.  OpenDNS addresses are 208.67.222.222 and
  * 208.67.220.220.  Used if ipconfigUSE_DHCP is set to 0, or ipconfigUSE_DHCP is set
  * to 1 but a DHCP server cannot be contacted.*/
 
-#define configDNS_SERVER_ADDR0    10
+#define configDNS_SERVER_ADDR0    127
 #define configDNS_SERVER_ADDR1    0
-#define configDNS_SERVER_ADDR2    2
-#define configDNS_SERVER_ADDR3    3
+#define configDNS_SERVER_ADDR2    0
+#define configDNS_SERVER_ADDR3    53
 
 /* Default netmask configuration.  Used if ipconfigUSE_DHCP is set to 0, or
  * ipconfigUSE_DHCP is set to 1 but a DHCP server cannot be contacted. */

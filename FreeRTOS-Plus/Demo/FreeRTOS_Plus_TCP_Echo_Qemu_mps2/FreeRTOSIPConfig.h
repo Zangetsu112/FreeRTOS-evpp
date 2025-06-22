@@ -32,15 +32,22 @@
 *
 *****************************************************************************/
 
+#define ipconfigUSE_IPv6          0 
+
 #ifndef FREERTOS_IP_CONFIG_H
 #define FREERTOS_IP_CONFIG_H
 
 /* Prototype for the function used to print out.  In this case it prints to the
  * console before the network is connected then a UDP port after the network has
  * connected. */
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void vLoggingPrintf( const char * pcFormatString,
                             ... );
-
+#ifdef __cplusplus
+}
+#endif
 
 /* Set to 1 to print out debug messages.  If ipconfigHAS_DEBUG_PRINTF is set to
  * 1 then FreeRTOS_debug_printf should be defined to the function used to print
@@ -95,8 +102,8 @@ extern void vLoggingPrintf( const char * pcFormatString,
 
 /* Include support for LLMNR: Link-local Multicast Name Resolution
  * (non-Microsoft) */
-#define ipconfigUSE_LLMNR                              ( 1 )
-
+// #define ipconfigUSE_LLMNR                              ( 1 )
+#define ipconfigUSE_LLMNR                              ( 0 )
 /* Include support for NBNS: NetBIOS Name Service (Microsoft) */
 #define ipconfigUSE_NBNS                               ( 1 )
 
@@ -207,7 +214,7 @@ extern void vLoggingPrintf( const char * pcFormatString,
  * are available to the IP stack.  The total number of network buffers is limited
  * to ensure the total amount of RAM that can be consumed by the IP stack is capped
  * to a pre-determinable value. */
-#define ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS         60
+#define ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS         100
 
 /* A FreeRTOS queue is used to send events from application tasks to the IP
  * stack.  ipconfigEVENT_QUEUE_LENGTH sets the maximum number of events that can
@@ -294,10 +301,10 @@ extern void vLoggingPrintf( const char * pcFormatString,
 
 /* Each TCP socket has a circular buffers for Rx and Tx, which have a fixed
  * maximum size.  Define the size of Rx buffer for TCP sockets. */
-#define ipconfigTCP_RX_BUFFER_LENGTH                   ( 0x4000 )
+#define ipconfigTCP_RX_BUFFER_LENGTH                   ( 0x100 )
 
 /* Define the size of Tx buffer for TCP sockets. */
-#define ipconfigTCP_TX_BUFFER_LENGTH                   ( 0x4000 )
+#define ipconfigTCP_TX_BUFFER_LENGTH                   ( 0x100 )
 
 /* When using call-back handlers, the driver may check if the handler points to
  * real program memory (RAM or flash) or just has a random non-zero value. */

@@ -3,6 +3,8 @@
 #include "tcp_conn.h"
 #include "atomic.h"
 #include "EventLoop.h"
+#include "FreeRTOSIPConfig.h"
+
 
 TCPServer::TCPServer(EventLoop* loop,
                      const std::string& laddr,
@@ -30,19 +32,23 @@ TCPServer::~TCPServer() {
 
 bool TCPServer::Init() {
     // DLOG_TRACE;
-    configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == kNull);
+    // configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == kNull);
+    configASSERT(status_ == kNull);
     listener_.reset(new Listener(loop_, listen_addr_));
     listener_->Listen();
     // status_.store(kInitialized);
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kInitialized);
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kInitialized);
+    status_ = kInitialized;
     return true;
 }
 
 bool TCPServer::Start() {
     // DLOG_TRACE;
-    configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == kInitialized);
+    // configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == kInitialized);
+    configASSERT(status_ == kInitialized);
     // status_.store(kStarting);
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStarting);
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStarting);
+    status_ = kStarting;
     configASSERT(listener_.get());
     bool rc = tpool_->Start(true);
     if (rc) {
@@ -68,7 +74,8 @@ bool TCPServer::Start() {
         // kRunning that will cause the configASSERT(status_ == kRuning) failed in
         // TCPServer::HandleNewConn.
         // status_.store(kRunning);
-        Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kRunning);
+        // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kRunning);
+        status_ = kRunning;
         listener_->Accept();
     }
     return rc;
@@ -76,11 +83,14 @@ bool TCPServer::Start() {
 
 void TCPServer::Stop(DoneCallback on_stopped_cb) {
     // DLOG_TRACE << "Entering ...";
-    configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == kRunning);
+    // configASSERT(static_cast<ServerStatus::Status>(reinterpret_cast<intptr_t>(status_)) == kRunning);
+    configASSERT(status_ == kRunning);
     // status_.store(kStopping);
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
+    status_ = kStopping;
     // substatus_.store(kStoppingListener);
-    Atomic_SwapPointers_p32(&substatus_, (void*)(intptr_t) SubStatus::kStoppingListener); 
+    // Atomic_SwapPointers_p32(&substatus_, (void*)(intptr_t) SubStatus::kStoppingListener); 
+    substatus_ = kStoppingListener;
     // loop_->RunInLoop(std::bind(&TCPServer::StopInLoop, this, on_stopped_cb));
     loop_->RunInLoop([this, on_stopped_cb]() { this->StopInLoop(on_stopped_cb); });
 }
@@ -100,7 +110,8 @@ void TCPServer::StopInLoop(DoneCallback on_stopped_cb) {
             on_stopped_cb = DoneCallback();
         }
         // status_.store(kStopped);
-        Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+        // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+        status_ = kStopped;
     } else {
         // DLOG_TRACE << "close connections";
         for (auto& c : connections_) {
@@ -125,7 +136,8 @@ void TCPServer::StopThreadPool() {
     configASSERT(loop_->IsInLoopThread());
     configASSERT(IsStopping());
     // substatus_.store(kStoppingThreadPool);
-    Atomic_SwapPointers_p32(&substatus_, (void*)(intptr_t) SubStatus::kStoppingThreadPool);
+    // Atomic_SwapPointers_p32(&substatus_, (void*)(intptr_t) SubStatus::kStoppingThreadPool);
+    substatus_ = kStoppingThreadPool;
     tpool_->Stop(true);
     configASSERT(tpool_->IsStopped());
 
@@ -134,13 +146,15 @@ void TCPServer::StopThreadPool() {
     tpool_.reset();
 
     // substatus_.store(kSubStatusNull);
-    Atomic_SwapPointers_p32(&substatus_, (void*)(intptr_t) SubStatus::kSubStatusNull);
+    // Atomic_SwapPointers_p32(&substatus_, (void*)(intptr_t) SubStatus::kSubStatusNull);
+    substatus_ = kSubStatusNull;
 }
 
 void TCPServer::HandleNewConn(Socket_t sockfd,
                               const std::string& remote_addr/*ip:port*/,
                               const struct freertos_sockaddr* raddr) {
     // DLOG_TRACE << "fd=" << sockfd;
+    FreeRTOS_debug_printf (("HandleNewConn received new socket: %p \n", sockfd));
     configASSERT(loop_->IsInLoopThread());
     if (IsStopping()) {
         // LOG_WARN << "this=" << this << " The server is at stopping status. Discard this socket fd=" << sockfd << " remote_addr=" << remote_addr;
@@ -182,14 +196,16 @@ void TCPServer::RemoveConnection(const TCPConnPtr& conn) {
             // At last, we stop all the working threads
             // DLOG_TRACE << "stop thread pool";
             // configASSERT(substatus_ == kStoppingListener);
-            configASSERT(static_cast<ServerStatus::SubStatus>(reinterpret_cast<intptr_t>(substatus_)) == ServerStatus::SubStatus::kStoppingListener);
+            // configASSERT(static_cast<ServerStatus::SubStatus>(reinterpret_cast<intptr_t>(substatus_)) == ServerStatus::SubStatus::kStoppingListener);
+            configASSERT(substatus_ = kStoppingListener);
             StopThreadPool();
             if (stopped_cb_) {
                 stopped_cb_();
                 stopped_cb_ = DoneCallback();
             }
             // status_.store(kStopped);
-            Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+            // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopped);
+            status_ = kStopped;
         }
     };
     loop_->RunInLoop(f);

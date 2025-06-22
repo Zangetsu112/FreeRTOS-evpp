@@ -69,9 +69,12 @@
         volatile int32_t socket_callback_count = 0; // FreeRTOS atomic int
         bool exit_loop;
         std::function<void()> pipe_callback;
+        // SemaphoreHandle_t select_mutex_;
+        SemaphoreHandle_t select_map_mutex_;
         std::map<std::pair<Socket_t, EventBits_t>, std::function<void()>> socket_callbacks;
 
     public:
+        UBaseType_t thread_id;
         EventBase();
         int event_dispatch(); 
         bool deleteSocketEvent(Socket_t socket, EventBits_t type);
@@ -84,10 +87,14 @@
     class EventLoop: public ServerStatus {
     public:
         typedef std::function<void()> Functor;
+        volatile bool notified_ = false; // FreeRTOS atomic bool
         UBaseType_t thread_id = 0;
         EventBase* evbase_;
         EventLoop();
         ~EventLoop();
+
+        // We use this to notify the thread when we put a task into the pending_functors_ queue
+        std::shared_ptr<PipeEventWatcher> watcher_;
 
 
         // @brief Run the IO Event driving loop forever
@@ -109,7 +116,7 @@
         }
         bool IsInLoopThread() const {
             // return xTaskHandle != nullptr;
-            return thread_id == 0;
+            return thread_id != 0;
         }
         int pending_functor_count() const {
             return pending_functor_count_;
@@ -126,14 +133,12 @@
         void DoPendingFunctors();
         int GetPendingQueueSize();
         bool IsPendingQueueEmpty();
-
+        
         SemaphoreHandle_t mutex_;
-        // We use this to notify the thread when we put a task into the pending_functors_ queue
-        std::shared_ptr<PipeEventWatcher> watcher_;
+        
         // When we put a task into the pending_functors_ queue,
         // we need to notify the thread to execute it. But we don't want to notify repeatedly.
         // std::atomic<bool> notified_;
-        void* volatile notified_ = NULL; // FreeRTOS atomic bool
         std::vector<Functor>* pending_functors_; // @Guarded By mutex_
         // std::atomic<int> pending_functor_count_;
         volatile int32_t pending_functor_count_ = 0; // FreeRTOS atomic int

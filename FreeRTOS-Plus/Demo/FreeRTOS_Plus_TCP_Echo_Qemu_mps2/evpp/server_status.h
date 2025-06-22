@@ -34,7 +34,7 @@
         };
 
         std::string StatusToString() const {
-            H_CASE_STRING_BIGIN(static_cast<Status>(reinterpret_cast<intptr_t>(status_)));
+            H_CASE_STRING_BIGIN(status_);
             H_CASE_STRING(kNull);
             H_CASE_STRING(kInitialized);
             H_CASE_STRING(kRunning);
@@ -44,22 +44,24 @@
         }
 
         bool IsRunning() const {
-            return static_cast<Status>(reinterpret_cast<intptr_t>(status_)) == kRunning;
+            return status_ == kRunning;
         }
 
         bool IsStopped() const {
-            return static_cast<Status>(reinterpret_cast<intptr_t>(status_)) == kStopped;
+            return status_ == kStopped;
         }
 
         bool IsStopping() const {
-            return static_cast<Status>(reinterpret_cast<intptr_t>(status_)) == kStopping;
+            return status_ == kStopping;
         }
 
     protected:
         // std::atomic<Status> status_ = { kNull };
         // std::atomic<SubStatus> substatus_ = { kSubStatusNull };
-        void* volatile status_ = 0;
-        void* volatile substatus_ = 0;
+        // void* volatile status_ = 0;
+        // void* volatile substatus_ = 0;
+        volatile uintptr_t status_ = kNull;      // Atomic status management
+        volatile uintptr_t substatus_ = kSubStatusNull; 
     };
 // }
 

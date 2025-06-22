@@ -29,7 +29,7 @@ void Listener::Listen(int backlog) {
     // Create socket
     fd_ = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_STREAM, FREERTOS_IPPROTO_TCP);
     if (fd_ == FREERTOS_INVALID_SOCKET) {
-        printf("Failed to create socket\n");
+        FreeRTOS_debug_printf(("Failed to create socket\n"));
         // LOG_FATAL("Create a socket failed");
         return;
     }
@@ -38,7 +38,7 @@ void Listener::Listen(int backlog) {
     BaseType_t xResult = FreeRTOS_setsockopt(fd_, 0, FREERTOS_SO_RCVTIMEO, &xNoTimeOut, sizeof(xNoTimeOut));
     if (xResult != 0) {
         // LOG_FATAL("Set socket to non-blocking mode failed");
-        printf("Failed to bind socket\n");
+        FreeRTOS_debug_printf(("Failed to bind socket\n"));
         FreeRTOS_closesocket(fd_);
         fd_ = FREERTOS_INVALID_SOCKET;
         return;
@@ -48,7 +48,7 @@ void Listener::Listen(int backlog) {
     BaseType_t bind_result = FreeRTOS_bind(fd_, &bind_addr, sizeof(bind_addr));
     if (bind_result != 0) {
         // LOG_FATAL("Bind error. addr=%s", listener->addr);
-        printf("Error at the listener\n");
+        FreeRTOS_debug_printf(("Error at the listener\n"));
         FreeRTOS_closesocket(fd_);
         fd_ = FREERTOS_INVALID_SOCKET;
         return;
@@ -77,6 +77,7 @@ void Listener::Accept() {
 
 void Listener::HandleAccept() {
     // DLOG_TRACE << "A new connection is comming in";
+    vPortEnterCritical();
     configASSERT(loop_->IsInLoopThread());
 
     struct freertos_sockaddr client_addr;
@@ -85,6 +86,7 @@ void Listener::HandleAccept() {
 
     // Accept the new connection
     new_socket = FreeRTOS_accept(fd_, &client_addr, &addr_len);
+    /*FreeRTOS_debug_printf(("Slave socket from HandleAccept: %p\n", pvSocketGetSocketID(new_socket)));*/
 
     // Set the new socket to non-blocking mode
     TickType_t xNoTimeout = 0;
@@ -92,6 +94,7 @@ void Listener::HandleAccept() {
     if (xResult != 0) {
         // LOG_ERROR("Set socket non-blocking failed");
         FreeRTOS_closesocket(new_socket);
+        vPortExitCritical();
         return;
     }
 
@@ -108,6 +111,7 @@ void Listener::HandleAccept() {
     if (strlen(raddr) == 0) {
         // LOG_ERROR("Failed to get remote address");
         FreeRTOS_closesocket(new_socket);
+        vPortExitCritical();
         return;
     }
 
@@ -117,6 +121,7 @@ void Listener::HandleAccept() {
     if (new_conn_fn_) {
        new_conn_fn_(new_socket, raddr, &client_addr);
     }
+    vPortExitCritical();
 }
 
 void Listener::Stop() {

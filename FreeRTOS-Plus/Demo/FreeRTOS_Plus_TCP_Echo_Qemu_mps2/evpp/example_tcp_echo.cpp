@@ -16,40 +16,42 @@ void TestTask::taskWrapper(void* pvParameters) {
 }
 
 void TestTask::run() {
-    printf("Hello from evvp task\n");
+    FreeRTOS_debug_printf(("Hello from evvp task\n"));
     std::string port = "9999";
     std::string addr = std::string("0.0.0.0:") + port;
     EventLoop loop;
-    TCPServer server(&loop, addr, "TCPEcho", 2);
+    TCPServer server(&loop, addr, "TCPEcho", 7);
     server.SetMessageCallback(&OnMessage);
     server.SetConnectionCallback(&OnConnection);
     server.Init();
     server.Start();
-    printf("Server stated\n");
+    FreeRTOS_debug_printf(("Server started\n"));
     loop.Run();
-    printf("This shouldn't print\n");
+    FreeRTOS_debug_printf(("This shouldn't print\n"));
 }
 
 void TestTask::OnMessage(const TCPConnPtr& conn, Buffer* msg) {
+    // TickType_t start_time = xTaskGetTickCount();
     std::string s = msg->NextAllString();
     std::string str;
     if (s.back() == '\n')
         str = s.substr(0, s.size() - 1);
     if (str.back() == '\r')
         str = str.substr(0, str.size() - 1);
-    printf("Received message: [ %s ]\n", str.c_str());
-    conn->Send(s);
+    // FreeRTOS_debug_printf(("Received message: [ %s ]\n", str.c_str()));
+    conn->Send("(Server Response) " + s);
 
     if (str == "quit" || str == "exit") {
         conn->Close();
     }
+    // TickType_t start_time = xTaskGetTickCount();
 }
 
 void TestTask::OnConnection(const TCPConnPtr& conn) {
     if (conn->IsConnected()) {
-        printf("Accept a new connection from %s\n", conn->remote_addr().c_str());
+        FreeRTOS_debug_printf(("Accepted a new connection from %s\n", conn->remote_addr().c_str()));
     } else {
-        printf("Disconnected from %s\n", conn->remote_addr().c_str());
+        FreeRTOS_debug_printf(("Disconnected from %s\n", conn->remote_addr().c_str()));
     }
 }
 

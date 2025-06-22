@@ -1,5 +1,6 @@
 #include "inner_pre.h"
 #include "FreeRTOS.h"
+#include "FreeRTOSIPConfig.h"
 #include "task.h"
 #include <cstddef>
 

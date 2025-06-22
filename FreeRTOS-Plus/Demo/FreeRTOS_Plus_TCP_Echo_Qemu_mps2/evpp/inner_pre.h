@@ -11,7 +11,7 @@
 // #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 extern "C" void vAssertCalled( void );
-extern void vLoggingPrintf( const char * pcFormatString,
+extern "C" void vLoggingPrintf( const char * pcFormatString,
                             ... );
 void* operator new(size_t size);
 void* operator new[](size_t size);

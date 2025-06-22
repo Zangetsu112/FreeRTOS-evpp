@@ -3,6 +3,7 @@
 #include "EventLoop.h"
 #include "event_loop_thread.h"
 #include "task.h"
+#include "FreeRTOSIPConfig.h"
 
 // namespace evpp {
 
@@ -15,8 +16,8 @@ EventLoopThread::~EventLoopThread() {
 }
 
 bool EventLoopThread::Start(bool wait_thread_started, Functor pre, Functor post) {
-    // status_ = kStarting;
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStarting);
+    status_ = kStarting;
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStarting);
 
     configASSERT(thread_ == nullptr);
     // thread_.reset(new std::thread(std::bind(&EventLoopThread::Run, this, pre, post)));
@@ -41,12 +42,13 @@ bool EventLoopThread::Start(bool wait_thread_started, Functor pre, Functor post)
 
 
     if (result_ != pdPASS) {
-        printf("Couldn't start task\n");
+        FreeRTOS_debug_printf(("Couldn't start task\n"));
     }
 
     if (wait_thread_started) {
-        while (reinterpret_cast<intptr_t>(status_) < kRunning) {
-            /*usleep(pdMS_TO_TICKS(1000));*/
+        // while (reinterpret_cast<intptr_t>(status_) < kRunning) {
+        while (status_ < kRunning) {
+            // usleep(pdMS_TO_TICKS(1000));
             taskYIELD();
         }
     }
@@ -61,8 +63,8 @@ void EventLoopThread::Run(const Functor& pre, const Functor& post) {
     }
 
     auto fn = [this, pre]() {
-        // status_ = kRunning;
-        Atomic_SwapPointers_p32(&this->status_, (void*)(intptr_t) Status::kRunning);
+        status_ = kRunning;
+        // Atomic_SwapPointers_p32(&this->status_, (void*)(intptr_t) Status::kRunning);
         if (pre) {
             auto rc = pre();
             if (rc != kOK) {
@@ -77,14 +79,15 @@ void EventLoopThread::Run(const Functor& pre, const Functor& post) {
         post();
     }
 
-    // status_ = kStopped;
-    Atomic_SwapPointers_p32(&this->status_, (void*)(intptr_t) Status::kStopped);
+    status_ = kStopped;
+    // Atomic_SwapPointers_p32(&this->status_, (void*)(intptr_t) Status::kStopped);
 }
 
 void EventLoopThread::Stop(bool wait_thread_exit) {
-    configASSERT(reinterpret_cast<intptr_t>(status_) == kRunning && IsRunning());
-    // status_ = kStopping;
-    Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
+    // configASSERT(reinterpret_cast<intptr_t>(status_) == kRunning && IsRunning());
+    configASSERT(status_ == kRunning && IsRunning());
+    status_ = kStopping;
+    // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kStopping);
     event_loop_->Stop();
 
     if (wait_thread_exit) {

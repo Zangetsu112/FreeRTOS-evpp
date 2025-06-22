@@ -5,8 +5,11 @@ compile_commands.json
 *.sh
 .vscode
 .cache
+*.o
+*.d
 
 # Ignore build results
+[Bb]uild/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Dd]ebug_with_Libslirp/

@@ -32,6 +32,7 @@ extern "C" {
 #include <task.h>
 
 #include <FreeRTOSConfig.h>
+#include <FreeRTOSIPConfig.h>
 
 #include <string.h>
 #include <stdarg.h>
@@ -63,83 +64,17 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
     *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 }
 
-// What I want to be able to do:
-// #include <evpp/tcp_server.h>
-// #include <evpp/buffer.h>
-// #include <evpp/tcp_conn.h>
-// 
-// #ifdef _WIN32
-// #include "../../winmain-inl.h"
-// #endif
-// 
-// void OnMessage(const evpp::TCPConnPtr& conn,
-//                evpp::Buffer* msg) {
-//     std::string s = msg->NextAllString();
-//     LOG_INFO << "Received a message [" << s << "]";
-//     conn->Send(s);
-// 
-//     if (s == "quit" || s == "exit") {
-//         conn->Close();
-//     }
-// }
-// 
-// 
-// void OnConnection(const evpp::TCPConnPtr& conn) {
-//     if (conn->IsConnected()) {
-//         LOG_INFO << "Accept a new connection from " << conn->remote_addr();
-//     } else {
-//         LOG_INFO << "Disconnected from " << conn->remote_addr();
-//     }
-// }
-// 
-// 
-// int main(int argc, char* argv[]) {
-//     std::string port = "9099";
-//     if (argc == 2) {
-//         port = argv[1];
-//     }
-//     std::string addr = std::string("0.0.0.0:") + port;
-//     evpp::EventLoop loop;
-//     evpp::TCPServer server(&loop, addr, "TCPEcho", 2);
-//     server.SetMessageCallback(&OnMessage);
-//     server.SetConnectionCallback(&OnConnection);
-//     server.Init();
-//     server.Start();
-//     loop.Run();
-//     return 0;
-// }
-// 
-
-
 int main( void )
 {
     printf("Inside the C main function\n");
-    // printf("Free Heap: %u bytes\n", xPortGetFreeHeapSize());
-    // printf("Min Ever Free Heap: %u bytes\n", xPortGetMinimumEverFreeHeapSize());
-    /*test_print();*/
-    /*app_main();*/
-
-    // // Create event group
-    // eventGroup = xEventGroupCreate();
-
-    // // Create queue for event data
-    // eventQueue = xQueueCreate(10, sizeof(uint32_t));
-
-    // // Create tasks
-    // xTaskCreate(eventLoopTask, "EventLoop", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    // xTaskCreate(CouldBePipeWatcher, "OtherTask", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-
     main_tcp_echo_client_tasks();
-    // app_main();
-    // TestTask task;
-    // task.start();
+    
     // Start the scheduler
     vTaskStartScheduler();
 
     // Should never reach here
     for (;;);
 
-    /*main_tcp_echo_client_tasks();*/
     return 0;
 }
 
@@ -195,11 +130,12 @@ void vApplicationTickHook( void )
 /*-----------------------------------------------------------*/
 
 void iptraceNETWORK_INTERFACE_RECEIVE(uint32_t ulIPAddress) {
-    FreeRTOS_debug_printf((xTaskGetTickCount()));  // Record packet arrival time
+    FreeRTOS_debug_printf(("%lu\n", (unsigned long) xTaskGetTickCount()));
 }
 
 void iptraceNETWORK_INTERFACE_TRANSMIT(uint32_t ulIPAddress) {
-    FreeRTOS_debug_printf((xTaskGetTickCount()));  // Record reply send time
+    FreeRTOS_debug_printf(("%lu\n", (unsigned long) xTaskGetTickCount()));
+    // FreeRTOS_debug_printf((unsigned long) (xTaskGetTickCount()));  // Record reply send time
 }
 
 // Defined in Inner_pre
@@ -228,6 +164,14 @@ void vLoggingPrintf( const char * pcFormat,
     vprintf( pcFormat, arg );
     va_end( arg );
 }
+
+
+// Overwrite stub
+int __wrap_swprintf(wchar_t *s, size_t n, const wchar_t *fmt, ...) {
+    (void)s; (void)n; (void)fmt;
+    return 0;
+}
+
 
 #ifdef __cplusplus
 }

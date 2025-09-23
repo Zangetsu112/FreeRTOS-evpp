@@ -45,14 +45,14 @@ extern "C" {
 /* Demo application includes. */
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
-#include "TCPEchoClient_SingleTasks.h"
+// #include "TCPEchoClient_SingleTasks.h"
 #include "CMSIS/CMSDK_CM3.h"
 #ifdef __cplusplus
 }
 #endif
 
 /*#include "evpp/example_tcp_echo.h"*/
-
+extern void start_tcp_task(void);
 
 /* Echo client task parameters  */
 #define mainECHO_CLIENT_TASK_STACK_SIZE     ( configMINIMAL_STACK_SIZE * 2 )                /* Not used in the linux port. */
@@ -415,3 +415,31 @@ BaseType_t xApplicationGetRandomNumber( uint32_t * pulNumber )
 #ifdef __cplusplus
 }
 #endif
+
+ /*-----------------------------------------------------------*/
+
+    #if ( ipconfigUSE_DHCP_HOOK != 0 )
+
+        #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 )
+            eDHCPCallbackAnswer_t xApplicationDHCPHook( eDHCPCallbackPhase_t eDHCPPhase,
+                                                        uint32_t ulIPAddress )
+            {
+                ( void ) eDHCPPhase;
+                ( void ) ulIPAddress;
+
+                return eDHCPContinue;
+            }
+        #else /* ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) */
+            eDHCPCallbackAnswer_t xApplicationDHCPHook_Multi( eDHCPCallbackPhase_t eDHCPPhase,
+                                                              struct xNetworkEndPoint * pxEndPoint,
+                                                              IP_Address_t * pxIPAddress )
+            {
+                ( void ) eDHCPPhase;
+                ( void ) pxEndPoint;
+                ( void ) pxIPAddress;
+
+                return eDHCPContinue;
+            }
+        #endif /* ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) */
+
+    #endif /* if ( ipconfigUSE_DHCP_HOOK != 0 )*/

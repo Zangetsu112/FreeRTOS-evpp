@@ -11,16 +11,16 @@ runs in the Virtual Machine (VM) and Echo Server runs on the host machine.
 +--------------------------------------------------------+
 |  Host Machine                                          |
 |  OS - Any                                              |
-|  Runs - Echo Server                                    |
+|  Runs - Echo Client                                    |
 |                          +--------------------------+  |
 |                          | Virtual Machine (VM)     |  |
-|                          | OS - Linux               |  |
+|                          | OS - Ubuntu              |  |
 |                          | Runs - Echo Client       |  |
 |                          |                          |  |
 |  +----------------+      |    +----------------+    |  |
 |  |                |      |    |                |    |  |
 |  |                |      |    |                |    |  |
-|  |  Echo Server   | <-------> |   Echo Client  |    |  |
+|  |  Echo Client   | <-------> |   Echo Server  |    |  |
 |  |                |      |    |                |    |  |
 |  |                |      |    |                |    |  |
 |  |                |      |    |                |    |  |
@@ -88,9 +88,9 @@ Launch Echo Server on the host machine.
 
 The Tap Networking backend makes use of a tap networking device in the host. It offers very good performance and can be configured to create virtually any type of network topology.
 
-The Echo Client in this demo runs in QEMU inside the VM. We need to enable
-tap networking in QEMU to enable the Echo Client to be able to reach the Echo
-Server. Do the following steps in the VM:
+The Echo Server in th EVPP demo server runs in QEMU inside the VM. We need to enable
+tap networking in QEMU to enable the Echo Server to be able to reach the Clients.
+Do the following steps in the VM:
 
 
 1. Run the `ifconfig` command to find the VM's network interface details:
@@ -221,7 +221,7 @@ sudo ip route add default via $VM_DEFAULT_GATEWAY dev virbr0
 The following diagram shows the setup:
 ```
 +-------------------------------------------------------------------------+
-|   Virtual Machine (VM)                                                  |
+|   Virtual Machine (VM) - Ubuntu                                         |
 |                                                                         |
 |     +-------------------------+                                         | VM NIC (enp0s3)
 |     |                         | Virtual NIC (virbr0-nic)                +--+
@@ -313,21 +313,12 @@ echo $ECHO_SERVER_IP_ADDRESS
 #define configECHO_SERVER_ADDR2 1
 #define configECHO_SERVER_ADDR3 204
 ```
-
-7. The echo server is assumed to be on port 7, which is the standard echo
-protocol port. You can change the port to any other listening port (e.g. 3682 ).
-Set `configECHO_PORT` to the value of this port.
-
-```c
-#define configECHO_PORT          ( 7 )
-```
-
-8. Build:
+7. Build:
 ```shell
 make
 ```
 
-9. Run:
+8. Run:
 ```shell
 sudo qemu-system-arm -machine mps2-an385 -cpu cortex-m3 \
           -kernel ./build/freertos_tcp_mps2_demo.axf \
@@ -337,16 +328,6 @@ sudo qemu-system-arm -machine mps2-an385 -cpu cortex-m3 \
           -display gtk -m 16M  -nographic -serial stdio \
           -monitor null -semihosting -semihosting-config enable=on,target=native
 ```
-
-10. You should see that following output on the terminal of the Echo Server (which
-is running `sudo nc -l 7` or `netcat -l 7` depending on your OS):
-```
-0FGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~0123456789:;<=> ?
-@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~0123456789:;<=>?
-@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~0123456789:;<=>?
-@ABCDEFGHIJKLM
-```
-
 ## Debug
 1. Build with debugging symbols:
 ```

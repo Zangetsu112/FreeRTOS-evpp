@@ -71,7 +71,9 @@ CXXFLAGS := $(CFLAGS)
 LDFLAGS = -T mps2_m3.ld
 LDFLAGS += -Xlinker -Map=${BUILD_DIR}/output.map
 LDFLAGS += -Xlinker --gc-sections
+# LDFLAGS += -nostartfiles -specs=nosys.specs -specs=rdimon.specs -lsupc++
 LDFLAGS += -nostartfiles -specs=nano.specs -specs=nosys.specs -specs=rdimon.specs -lsupc++
+LDFLAGS += -Wl,--wrap=swprintf
 
 OBJ_FILES := $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.o)
 OBJ_FILES += main.o
@@ -103,3 +105,4 @@ ${BUILD_DIR}/%.o : $(EVPP_DIR)/%.cpp Makefile
 
 clean:
 	-rm -rf $(BUILD_DIR)
+	rm -rf *.o *.d

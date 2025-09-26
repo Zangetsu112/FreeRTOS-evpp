@@ -8,17 +8,17 @@ The demo requires 2 components -
 ```
 +--------------------------------------------------------+
 |  Host Machine                                          |
-|  OS - Any                                              |
+|  OS - Ubuntu                                           |
 |  Runs - Echo Server                                    |
 |                          +--------------------------+  |
 |                          |                          |  |
-|                          | QEMU                     |  |
-|                          | Runs - Echo Client       |  |
+|                          |    QEMU - mps2-an385     |  |
+|                          |                          |  |
 |                          |                          |  |
 |  +----------------+      |    +----------------+    |  |
 |  |                |      |    |                |    |  |
 |  |                |      |    |                |    |  |
-|  |  Echo Server   | <-------> |   Echo Client  |    |  |
+|  |  Echo Client   | <-------> |   Echo Server  |    |  |
 |  |                |      |    |                |    |  |
 |  |                |      |    |                |    |  |
 |  |                |      |    |                |    |  |
@@ -36,42 +36,12 @@ The demo requires 2 components -
    * Make (Version 4.3):
      ```
      sudo apt install make
+     sudo apt install gcc-arm-none-eabi
      ```
 2.  Clone the source code:
      ```
       git clone https://github.com/FreeRTOS/FreeRTOS.git --recurse-submodules --depth 1
      ```
-
-## Launch Echo Server
-Launch Echo Server on the host machine.
-
-### Host OS is Linux
-* Install `netcat`:
-   ```
-   sudo apt install netcat
-   ```
-* Start an Echo Server on port 7:
-   ```shell
-   sudo nc -l 7
-   ```
-
-### Host OS is Windows
-* Install [Npcap/Nmap](https://nmap.org/download.html#windows).
-* Start an Echo Server on port 7:
-    ```shell
-    ncat -l 7
-    ```
-
-### Host OS is Mac
-* Install `netcat`:
-   ```shell
-   brew install netcat
-   ```
-* Start an Echo Server on port 7:
-    ```shell
-    nc -l -p 7
-    ```
-
 ## Enable User Mode Networking in QEMU
 
 The User Mode Networking is implemented using *slirp*, which provides a full
@@ -85,18 +55,8 @@ User Mode Networking has the following limitations:
    Linux hosts require one time setup by root to make ICMP work within the
    guest.
  - The guest is not directly accessible from the host or the external network.
-
-
-## Build and Run
-Do the following steps on the host machine:
-
-1. The echo server is assumed to be on port 7, which is the standard echo
-protocol port. You can change the port to any other listening port (e.g. 3682 ).
-Set `configECHO_PORT` to the value of this port.
-
-```c
-#define configECHO_PORT          ( 7 )
-```
+1. Configure number of server tasks:
+Update ```TCPServer server(&loop, addr, "TCPEcho", <number of slave event loops>);``` in evpp/example_tcp_echo.cpp
 
 2. Build:
 ```shell
@@ -105,21 +65,19 @@ Set `configECHO_PORT` to the value of this port.
 
 3. Run:
 ```shell
-   sudo qemu-system-arm -machine mps2-an385 -cpu cortex-m3 \
+   qemu-system-arm -machine mps2-an385 -cpu cortex-m3 \
    -kernel ./build/freertos_tcp_mps2_demo.axf \
    -monitor null -semihosting -semihosting-config enable=on,target=native -serial stdio -nographic \
-   -netdev user,id=mynet0, -net nic,model=lan9118,netdev=mynet0
-
+   -netdev user,id=mynet0,hostfwd=tcp::2222-:9999,restrict=off \
+   -net nic,model=lan9118,netdev=mynet0
 ```
 
-6. You should see that following output on the terminal of the Echo Server (which
-is running `sudo nc -l 7` or `netcat -l 7` or `nc -l -p 7` depending on your OS):
+## Connect to the Server
+On host machine:
+```shell
+   netcat localhost 2222
 ```
-0FGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~0123456789:;<=> ?
-@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~0123456789:;<=>?
-@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~0123456789:;<=>?
-@ABCDEFGHIJKLM
-```
+Can start multiple netcat client to the server
 
 ## Debug
 1. Build with debugging symbols:
@@ -129,10 +87,10 @@ is running `sudo nc -l 7` or `netcat -l 7` or `nc -l -p 7` depending on your OS)
 
 2. Start QEMU in the paused state waiting for GDB connection:
 ```shell
-   sudo qemu-system-arm -machine mps2-an385 -cpu cortex-m3 \
+   sudo qemu-system-arm -machine mps2-an385 -cpu cortex-m3 -s -S \
    -kernel ./build/freertos_tcp_mps2_demo.axf \
    -monitor null -semihosting -semihosting-config enable=on,target=native -serial stdio -nographic \
-   -netdev user,id=mynet0, -net nic,model=lan9118,netdev=mynet0 \
+   -netdev user,id=mynet0,hostfwd=tcp::2222-:9999,restrict=off -net nic,model=lan9118,netdev=mynet0 \
    -object filter-dump,id=tap_dump,netdev=mynet0,file=/tmp/qemu_tap_dump
 ```
 

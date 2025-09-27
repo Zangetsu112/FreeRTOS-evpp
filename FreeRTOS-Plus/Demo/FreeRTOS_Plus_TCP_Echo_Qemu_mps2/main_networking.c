@@ -45,14 +45,12 @@ extern "C" {
 /* Demo application includes. */
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
-#include "TCPEchoClient_SingleTasks.h"
 #include "CMSIS/CMSDK_CM3.h"
 #ifdef __cplusplus
 }
 #endif
 
-/*#include "evpp/example_tcp_echo.h"*/
-
+extern void start_tcp_task(void);
 
 /* Echo client task parameters  */
 #define mainECHO_CLIENT_TASK_STACK_SIZE     ( configMINIMAL_STACK_SIZE * 2 )                /* Not used in the linux port. */
@@ -62,22 +60,7 @@ extern "C" {
 #define mainHOST_NAME                       "RTOSDemo"
 #define mainDEVICE_NICK_NAME                "qemu_demo"
 
-/* Set the following constants to 1 or 0 to define which tasks to include and
- * exclude:
- *
- * mainCREATE_TCP_ECHO_TASKS_SINGLE:  When set to 1 a set of tasks are created that
- * send TCP echo requests to the standard echo port (port 7), then wait for and
- * verify the echo reply, from within the same task (Tx and Rx are performed in the
- * same RTOS task).  The IP address of the echo server must be configured using the
- * configECHO_SERVER_ADDR0 to configECHO_SERVER_ADDR3 constants in
- * FreeRTOSConfig.h.
- *
- */
-#define mainCREATE_TCP_ECHO_TASKS_SINGLE    1
-
 /*-----------------------------------------------------------*/
-// void start_tcp_task(void);
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -415,3 +398,32 @@ BaseType_t xApplicationGetRandomNumber( uint32_t * pulNumber )
 #ifdef __cplusplus
 }
 #endif
+
+/*-----------------------------------------------------------*/
+// The TCP library expects this hook be declared -- when starting up a server
+
+#if ( ipconfigUSE_DHCP_HOOK != 0 )
+
+    #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 )
+        eDHCPCallbackAnswer_t xApplicationDHCPHook( eDHCPCallbackPhase_t eDHCPPhase,
+                                                    uint32_t ulIPAddress )
+        {
+            ( void ) eDHCPPhase;
+            ( void ) ulIPAddress;
+
+            return eDHCPContinue;
+        }
+    #else /* ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) */
+        eDHCPCallbackAnswer_t xApplicationDHCPHook_Multi( eDHCPCallbackPhase_t eDHCPPhase,
+                                                          struct xNetworkEndPoint * pxEndPoint,
+                                                          IP_Address_t * pxIPAddress )
+        {
+            ( void ) eDHCPPhase;
+            ( void ) pxEndPoint;
+            ( void ) pxIPAddress;
+
+            return eDHCPContinue;
+        }
+    #endif /* ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) */
+
+#endif /* if ( ipconfigUSE_DHCP_HOOK != 0 )*/

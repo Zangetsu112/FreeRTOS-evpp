@@ -27,7 +27,11 @@ void FdChannel::Close() {
 
 void FdChannel::AttachToLoop() {
     if (!IsNoneEvent() && !attached_) {
-        // loop_->evbase_->addSocketEvent(fd_, std::bind(&FdChannel::HandleEvent, this), events_);
+        // This bit of code is a hack to replicate Libevent::event_add
+        // addSocketEvent adds a new {event -> callback} pair to the map
+        // The Notify call is to interrupt the blocked loop and
+        // restart the blocking call with the updated SocketSet
+        // addSocketEvent + Notify == event_add (Libevent)
         loop_->evbase_->addSocketEvent(fd_, [this]() { this->HandleEvent(); }, events_);
         loop_->notified_ = 1;
         loop_->watcher_->Notify();
@@ -98,10 +102,3 @@ void FdChannel::HandleEvent() {
         write_fn_();
     }
 }
-
-    // EventLoop* loop_;
-    // bool attached_;
-    // Socket_t fd_;
-    // int events_;
-    // ReadEventCallback read_fn_;
-    // EventCallback write_fn_;

@@ -25,8 +25,6 @@ TCPConn::TCPConn(EventLoop* l,
         chan_->SetReadCallback([this] () { this->HandleRead(); });
         chan_->SetWriteCallback([this]() { this->HandleWrite(); });
     }
-
-    // DLOG_TRACE << "TCPConn::[" << name_ << "] channel=" << chan_.get() << " fd=" << sockfd << " addr=" << AddrToString();
 }
 
 TCPConn::~TCPConn() {
@@ -43,8 +41,6 @@ TCPConn::~TCPConn() {
         FreeRTOS_closesocket(fd_);
         fd_ = FREERTOS_INVALID_SOCKET;
     }
-
-    // configASSERT(!delay_close_timer_.get());
 }
 
 void TCPConn::Close() {
@@ -230,7 +226,6 @@ void TCPConn::HandleWrite() {
             chan_->DisableWriteEvent();
 
             if (write_complete_fn_) {
-                // loop_->QueueInLoop(std::bind(write_complete_fn_, shared_from_this()));
                  loop_->QueueInLoop([self = shared_from_this()]() { self -> write_complete_fn_(self); });
             }
         }
@@ -238,7 +233,6 @@ void TCPConn::HandleWrite() {
         int serrno = errno;
 
         if ((serrno) == pdFREERTOS_ERRNO_EWOULDBLOCK || (serrno) == pdFREERTOS_ERRNO_EAGAIN) {
-            // LOG_WARN << "this=" << this << " TCPConn::HandleWrite errno=" << serrno << " " << strerror(serrno);
         } else {
             HandleError();
         }

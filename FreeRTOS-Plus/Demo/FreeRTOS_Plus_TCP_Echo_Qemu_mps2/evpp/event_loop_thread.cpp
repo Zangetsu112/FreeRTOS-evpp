@@ -25,7 +25,7 @@ bool EventLoopThread::Start(bool wait_thread_started, Functor pre, Functor post)
     pre_ = pre;
     post_ = post;
     // Create the task
-    BaseType_t result_ = xTaskCreate(
+    BaseType_t result = xTaskCreate(
         taskFunction,        // Static function to run
         name_.c_str(),
         configMINIMAL_STACK_SIZE, // Stack size (adjust as needed)
@@ -41,7 +41,7 @@ bool EventLoopThread::Start(bool wait_thread_started, Functor pre, Functor post)
     event_loop_->thread_id = xTaskDetails.xTaskNumber;
 
 
-    if (result_ != pdPASS) {
+    if (result != pdPASS) {
         FreeRTOS_debug_printf(("Couldn't start task\n"));
     }
 

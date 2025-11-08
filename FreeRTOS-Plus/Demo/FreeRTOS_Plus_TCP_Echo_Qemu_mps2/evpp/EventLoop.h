@@ -133,12 +133,8 @@
         void DoPendingFunctors();
         int GetPendingQueueSize();
         bool IsPendingQueueEmpty();
-        
+
         SemaphoreHandle_t mutex_;
-        
-        // When we put a task into the pending_functors_ queue,
-        // we need to notify the thread to execute it. But we don't want to notify repeatedly.
-        // std::atomic<bool> notified_;
         std::vector<Functor>* pending_functors_; // @Guarded By mutex_
         // std::atomic<int> pending_functor_count_;
         volatile int32_t pending_functor_count_ = 0; // FreeRTOS atomic int

@@ -68,7 +68,7 @@ int main( void )
 {
     printf("Inside the C main function\n");
     main_tcp_echo_client_tasks();
-    
+
     // Start the scheduler
     vTaskStartScheduler();
 

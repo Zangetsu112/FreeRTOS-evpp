@@ -19,6 +19,7 @@ extern "C" {
 // namespace evpp {
 class EventLoopThread : public ServerStatus {
 private:
+  // Task start and clean up after thread join
   std::function<int()> pre_ = nullptr;
   std::function<int()> post_ = nullptr;
 

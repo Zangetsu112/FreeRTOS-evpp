@@ -14,7 +14,7 @@ public:
          const std::string& /*remote address with format "ip:port"*/,
          const struct freertos_sockaddr* /*remote address*/) >
     NewConnectionCallback;
-    Listener(EventLoop* loop, const std::string& addr/*local listening address : ip:port*/);
+    Listener(EventLoop* loop, const std::string& addr /*local listening address : ip:port*/);
     ~Listener();
 
     // socket listen
@@ -39,6 +39,3 @@ private:
     std::unique_ptr<FdChannel> chan_;
     NewConnectionCallback new_conn_fn_;
 };
-
-
-

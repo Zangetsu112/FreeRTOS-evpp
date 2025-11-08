@@ -21,7 +21,6 @@
         xBindAddress.sin_family = FREERTOS_AF_INET;
         xBindAddress.sin_port = FreeRTOS_htons(0);
 
-        
         xListeningSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_STREAM, FREERTOS_IPPROTO_TCP);
         if (xListeningSocket == FREERTOS_INVALID_SOCKET) return false;
         FreeRTOS_setsockopt(xListeningSocket, 0, FREERTOS_SO_RCVTIMEO, &xRxBlockTime_master, sizeof(TickType_t));
@@ -50,7 +49,7 @@
         loop_ = loop;
         evbase_ = loop -> event_base();
         handler_ = handler;
-    }  
+    }
 
     PipeEventWatcher::PipeEventWatcher(EventLoop* loop, Handler&& handler) 
         : loop_(loop), handler_(std::move(handler)) {
@@ -97,7 +96,7 @@
 
     Socket_t PipeEventWatcher::getServerSocket() { return xListeningSocket; }
 
-    EventBase::EventBase() : socket_callback_count(0), exit_loop(false) {      
+    EventBase::EventBase() : socket_callback_count(0), exit_loop(false) {
         xSocketSet = FreeRTOS_CreateSocketSet();
         FreeRTOS_debug_printf(("EventBase [%p]: Socket Set [%p] Initialization\n", this, xSocketSet));
         select_map_mutex_ = xSemaphoreCreateMutex();
@@ -161,7 +160,7 @@
                 xSemaphoreGive(select_map_mutex_);
                 return false;
             }
-                
+
             socket_callbacks.erase(std::make_pair(socket, type));
             // socket_callback_count--;
             Atomic_Decrement_u32((uint32_t*)&socket_callback_count);
@@ -263,7 +262,7 @@
         status_ = kStarting;
         int rc = watcher_->AsyncWait();
         configASSERT(rc);
-        
+
         // After everything have initialized, we set the status to kRunning
         // status_.store(kRunning);
         // Atomic_SwapPointers_p32(&status_, (void*)(intptr_t) Status::kRunning); 
@@ -301,7 +300,7 @@
         configASSERT(status_ == kStopping);
         auto f = [this]() {
             for (int i = 0;;i++) {
-               FreeRTOS_debug_printf(("calling DoPendingFunctors index=%d", i));
+                FreeRTOS_debug_printf(("calling DoPendingFunctors index=%d", i));
                 DoPendingFunctors();
                 if (IsPendingQueueEmpty()) {
                     break;
@@ -314,7 +313,6 @@
         watcher_ -> Notify(); // EventBase does not have acess to the watcher, we need to interrupt the select to exit out of waiting
         f();
     }
-
 
     void EventLoop::RunInLoop(const Functor& functor) {
         if (IsRunning() && IsInLoopThread()) {
@@ -334,16 +332,15 @@
 
     void EventLoop::QueueInLoop(const Functor& cb) {
         // int notif = reinterpret_cast<intptr_t>(notified_);;
-       FreeRTOS_debug_printf(("pending_functor_count = %ld, PendingQueueSize = %d, notified = %d\n", 
+        FreeRTOS_debug_printf(("pending_functor_count = %ld, PendingQueueSize = %d, notified = %d\n",
                     pending_functor_count_, GetPendingQueueSize(), notified_)); 
         if (xSemaphoreTake(mutex_, portMAX_DELAY) == pdTRUE){
             pending_functors_->emplace_back(cb);
+            Atomic_Increment_u32((uint32_t*)&pending_functor_count_);
             xSemaphoreGive(mutex_);
         }
-        // ++pending_functor_count_;
-        Atomic_Increment_u32((uint32_t*)&pending_functor_count_);
         if (!notified_) {
-           FreeRTOS_debug_printf(("call watcher_->Nofity() notified_.store(true)\n"));
+            FreeRTOS_debug_printf(("call watcher_->Nofity() notified_.store(true)\n"));
 
             // We must set notified_ to true before calling `watcher_->Notify()`
             // otherwise there is a change that:
@@ -370,7 +367,7 @@
     }
 
     void EventLoop::QueueInLoop(Functor&& cb) {
-       FreeRTOS_debug_printf(("pending_functor_count = %ld, PendingQueueSize = %d, notified = %d\n", 
+        FreeRTOS_debug_printf(("pending_functor_count = %ld, PendingQueueSize = %d, notified = %d\n",
                 pending_functor_count_, GetPendingQueueSize(), notified_)); 
         if (xSemaphoreTake(mutex_, portMAX_DELAY) == pdTRUE) {
             pending_functors_->emplace_back(std::move(cb));
@@ -379,7 +376,7 @@
         // ++pending_functor_count_;
         Atomic_Increment_u32((uint32_t*)&pending_functor_count_);
 
-        FreeRTOS_debug_printf(("pending_functor_count = %ld, PendingQueueSize = %d, notified = %d\n", 
+        FreeRTOS_debug_printf(("pending_functor_count = %ld, PendingQueueSize = %d, notified = %d\n",
                 pending_functor_count_, GetPendingQueueSize(), notified_));         
         if (!notified_) {
             FreeRTOS_debug_printf(("call watcher_->Nofity() notified_.store(true)\n"));
@@ -403,8 +400,10 @@
         std::vector<Functor> functors;
         if (xSemaphoreTake(mutex_, portMAX_DELAY) == pdTRUE){
             // notified_.store(false)
-            // Atomic_CompareAndSwapPointers_p32(&notified_, NULL, (void*)1);
-            Atomic_Decrement_u32((uint32_t*)&notified_);
+            // Atomic_Decrement_u32((uint32_t*)&notified_);
+
+            // Reset Notified to 0
+            Atomic_AND_u32((uint32_t*)&notified_, 0);
             pending_functors_->swap(functors);
             FreeRTOS_debug_printf(("pending_functor_count = %ld, PendingQueueSize = %d, notified = %d\n", 
                     pending_functor_count_, GetPendingQueueSize(), notified_));
@@ -427,84 +426,3 @@
     bool EventLoop::IsPendingQueueEmpty() {
         return pending_functors_->empty();
     }
-// }
-
-
-//     class TestTask {
-//     private:
-//         static void taskWrapper(void* pvParameters) {
-//             TestTask* instance = static_cast<TestTask*> (pvParameters);
-//             instance -> run();
-//     }
-
-//     static void try_callback(void * none) {
-//         printf("Recieved data on socket\n");
-//     }
-
-//     void run() {
-//         printf("Before EventLoop\n");
-//         EventLoop eventLoop;
-        
-//         // Test with a socket
-//         struct freertos_sockaddr xBindAddress;
-//         // Make socket non blocking
-//         const TickType_t xRxBlockTime_master = 0;
-//         xBindAddress.sin_family = FREERTOS_AF_INET;
-//         xBindAddress.sin_port = FreeRTOS_htons(9999);
-
-        
-//         Socket_t socket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_STREAM, FREERTOS_IPPROTO_TCP);
-//         // if (socket == FREERTOS_INVALID_SOCKET) return false;
-//         FreeRTOS_setsockopt(socket, 0, FREERTOS_SO_RCVTIMEO, &xRxBlockTime_master, sizeof(TickType_t));
-
-//         if (FreeRTOS_bind(socket, &xBindAddress, sizeof(xBindAddress)) != 0) {
-//             printf("Couldn't bind the listening socket \n");
-//             FreeRTOS_closesocket(socket);
-//             // return false;
-//         }
-
-//         FreeRTOS_GetLocalAddress(socket, &xBindAddress);
-
-//         if (FreeRTOS_listen(socket, 1) != 0) {
-//             printf("Couldn't listen on the listening socket \n");
-//             FreeRTOS_closesocket(socket);
-//             // return false;
-//         }
-
-//         eventLoop.addSocketEvent(socket, try_callback);
-
-
-
-//         eventLoop.start();
-//         // std::map<int, int> my_map;
-//         // my_map[1] = 2;
-//         // my_map[4] = 5;
-//         // printf("%d %d", my_map[1], my_map[4]);
-//         // my_map.erase(1);
-//         // auto it = my_map.find(1);
-//         // if (it == my_map.end()) 
-//         //     printf("1 removed from the map");
-//         printf("Started Eventloop\n");
-
-
-//         // Periodically trigger the PipeWatcher
-//         while (1) {
-//             vTaskDelay(pdMS_TO_TICKS(5000));  // Every 5 seconds
-//             eventLoop.pipe_watcher->Notify();
-//             printf("Sent a Notify to pipewatcher\n");
-//         }
-//     }
-
-// public:
-//     void start() {
-//         xTaskCreate(taskWrapper, "TestTask", 2048, this, 1, NULL);
-//     }
-
-// };
-
-// extern "C" void app_main(void) {
-//     TestTask task;
-//     task.start();
-// }
-
-
